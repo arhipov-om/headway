@@ -3,6 +3,7 @@ from typing import Dict, List
 from uuid import UUID
 
 from ..domain.entitites import User, Reminder, Motivation, Notification
+from ..domain.interfaces import IUserRepository, INotificationRepository, IMotivationRepository, IReminderRepository
 
 
 class InMemoryDB:
@@ -13,8 +14,8 @@ class InMemoryDB:
         self.notifications: Dict[UUID, Notification] = {}
 
 
-class UserRepository:
-    def __init__(self, db: InMemoryDB):
+class UserRepository(IUserRepository):
+    def __init__(self, db: InMemoryDB) -> None:
         self.db = db
 
     def create(self, user: User) -> User:
@@ -28,7 +29,7 @@ class UserRepository:
         return list(self.db.users.values())
 
 
-class ReminderRepository:
+class ReminderRepository(IReminderRepository):
     def __init__(self, db: InMemoryDB):
         self.db = db
 
@@ -49,8 +50,11 @@ class ReminderRepository:
     def delete(self, reminder_id: UUID) -> None:
         self.db.reminders.pop(reminder_id, None)
 
+    def list_all(self) -> list[Reminder]:
+        return list(self.db.reminders.values())
 
-class MotivationRepository:
+
+class MotivationRepository(IMotivationRepository):
     def __init__(self, db: InMemoryDB):
         self.db = db
 
@@ -67,7 +71,7 @@ class MotivationRepository:
         return motivation
 
 
-class NotificationRepository:
+class NotificationRepository(INotificationRepository):
     def __init__(self, db: InMemoryDB):
         self.db = db
 
@@ -81,3 +85,6 @@ class NotificationRepository:
     def mark_sent(self, notification_id: UUID) -> None:
         if notification_id in self.db.notifications:
             self.db.notifications[notification_id].sent = True
+
+    def list_all(self) -> list[Notification]:
+        return list(self.db.notifications.values())

@@ -1,20 +1,26 @@
 import sys
-from datetime import time, datetime
-from uuid import uuid4, UUID
+from datetime import time
+from uuid import UUID
 
-from headway.infrastructure.inmemory import InMemoryDB
-from ..domain.entitites import User, Reminder, Motivation, Notification
+from headway.application.dto import UserDTO, ReminderDTO, NotificationDTO
+from headway.application.services import UserService, ReminderService, NotificationService
+from headway.infrastructure.inmemory import InMemoryDB, UserRepository, ReminderRepository, NotificationRepository, \
+    MotivationRepository
 
 
 class CLI:
-    def __init__(self, database: InMemoryDB):
-        self.database = database
+    def __init__(self,
+                 user_service: UserService,
+                 reminder_service: ReminderService,
+                 notification_service: NotificationService):
+        self.user_service = user_service
+        self.reminder_service = reminder_service
+        self.notification_service = notification_service
 
     def create_user(self):
         name = input("Введите имя пользователя: ")
-        user = User(id=uuid4(), name=name)
-        self.database.users[user.id] = user
-        print(f"Пользователь создан: {user.id} - {user.name}")
+        user_dto: UserDTO = self.user_service.create_user(name)
+        print(f"Пользователь создан: {user_dto.id} - {user_dto.name}")
 
     def create_reminder(self):
         user_id_input = input("ID пользователя: ")
@@ -25,43 +31,52 @@ class CLI:
         h, m = map(int, t_input.split(":"))
         t = time(h, m)
         duration = input("Длительность (1w/2w/1m/3m/6m/12m): ")
-        reminder = Reminder(id=uuid4(), user_id=user_id, text=text, frequency=frequency, time=t, duration=duration)
-        self.database.reminders[reminder.id] = reminder
-        print(f"Напоминание создано: {reminder.id} - {reminder.text}")
+
+        reminder_dto: ReminderDTO = self.reminder_service.create_reminder(user_id, text, frequency, t, duration)
+        print(f"Напоминание создано: {reminder_dto.id} - {reminder_dto.text}")
 
     def list_reminders(self):
-        for r in self.database.reminders.values():
-            user = self.database.users[r.user_id]
-            print(f"{r.id} | {r.text} | {r.frequency} | {r.time} | Пользователь: {user.name}")
+        user_id_input = input("ID пользователя для просмотра напоминаний: ")
+        user_id = UUID(user_id_input)
+        reminders: list[ReminderDTO] = self.reminder_service.list_reminders_by_user(user_id)
+        for r in reminders:
+            print(f"{r.id} | {r.text} | {r.frequency} | {r.time} | Активно: {r.active}")
 
-    def generate_notification(self):
-        for reminder in self.database.reminders.values():
-            motivation = Motivation(id=uuid4(), text=f"Аффирмация для {reminder.text}")
-            self.database.motivations[motivation.id] = motivation
-            notification = Notification(
-                id=uuid4(),
-                reminder_id=reminder.id,
-                scheduled_for=datetime.now(),
-                motivation_id=motivation.id
-            )
-            self.database.notifications[notification.id] = notification
-            print(f"Notification для '{reminder.text}' с мотивацией: '{motivation.text}' создан")
+    def generate_notifications(self):
+        notifications: list[NotificationDTO] = self.notification_service.generate_notifications()
+        for n in notifications:
+            print(f"Notification для '{n.reminder_id}' с мотивацией: '{n.motivation_text}' создан")
 
     def list_notifications(self):
-        for n in self.database.notifications.values():
-            r = self.database.reminders[n.reminder_id]
-            m = self.database.motivations[n.motivation_id]
-            print(f"{n.id} | Напоминание: {r.text} | Мотивация: {m.text} | Отправлено: {n.sent}")
+        notifications: list[NotificationDTO] = self.notification_service.list_notifications()
+        for n in notifications:
+            print(f"{n.id} | Напоминание: {n.reminder_id} | Мотивация: {n.motivation_text} | Отправлено: {n.sent}")
 
 
 def main():
     db = InMemoryDB()
-    cli = CLI(db)
+
+    user_repo = UserRepository(db)
+    reminder_repo = ReminderRepository(db)
+    notification_repo = NotificationRepository(db)
+    motivation_repo = MotivationRepository(db)
+
+    user_service = UserService(user_repo=user_repo)
+
+    reminder_service = ReminderService(reminder_repo=reminder_repo)
+    notification_service = NotificationService(
+        reminder_repo=reminder_repo,
+        notification_repo=notification_repo,
+        motivation_repo=motivation_repo
+    )
+
+    cli = CLI(user_service, reminder_service, notification_service)
+
     actions = {
         "1": ("Создать пользователя", cli.create_user),
         "2": ("Создать напоминание", cli.create_reminder),
         "3": ("Список напоминаний", cli.list_reminders),
-        "4": ("Сгенерировать уведомления с мотивацией", cli.generate_notification),
+        "4": ("Сгенерировать уведомления с мотивацией", cli.generate_notifications),
         "5": ("Список уведомлений", cli.list_notifications),
         "q": ("Выход", sys.exit)
     }
