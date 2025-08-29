@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime, time
-from typing import List, Optional
+from enum import Enum
 from uuid import UUID
+
+from headway.application.value_objects import WeekDays
 
 
 @dataclass
 class User:
     id: UUID
-    name: Optional[str] = None
+    name: str
     timezone: str = "UTC"
 
     def __post_init__(self):
@@ -20,38 +22,50 @@ class User:
 class Motivation:
     id: UUID
     text: str
-    category: str = "affirmation"  # например: affirmation, quote
+    category: str = "affirmation"
+
+    VALID_CATEGORIES = {"affirmation", "quote"}
 
     def __post_init__(self):
         assert isinstance(self.id, UUID), "Motivation.id должен быть UUID"
         assert self.text.strip(), "Motivation.text не может быть пустым"
-        assert self.category in ("affirmation", "quote"), "Неверная категория"
+        assert self.category in self.VALID_CATEGORIES, "Неверная категория"
 
 
-@dataclass
+class Frequency(Enum):
+    daily = "daily"
+    every_2_days = "every_2_days"
+    weekly = "weekly"
+    custom = "custom"
+
+
+@dataclass(kw_only=True)
 class Reminder:
     id: UUID
     user_id: UUID
-    text: str  # "30 приседаний"
-    frequency: str  # daily, every_2_days, weekly, custom
-    custom_days: Optional[List[int]] = None  # [0,2,4] - дни недели (0=понедельник)
-    time: time = time(9, 0)  # время напоминания
-    duration: str = "1m"  # 1w, 2w, 1m, 3m, 6m, 12m
+    text: str
+    frequency: Frequency
+    days: WeekDays = WeekDays.default()
+    time: time
+    start_date: datetime
+    end_date: datetime
     active: bool = True
 
-    VALID_FREQUENCIES = {"daily", "every_2_days", "weekly", "custom"}
-    VALID_DURATIONS = {"1w", "2w", "1m", "3m", "6m", "12m"}
-
     def __post_init__(self):
-        assert isinstance(self.id, UUID), "Reminder.id должен быть UUID"
-        assert isinstance(self.user_id, UUID), "Reminder.user_id должен быть UUID"
-        assert self.text.strip(), "Reminder.text не может быть пустым"
-        assert self.frequency in self.VALID_FREQUENCIES, f"frequency должно быть одним из {self.VALID_FREQUENCIES}"
-        if self.frequency == "custom":
-            assert self.custom_days is not None and all(0 <= d <= 6 for d in self.custom_days), \
-                "Для custom frequency custom_days должны быть числами 0-6"
-        assert isinstance(self.time, time), "Reminder.time должен быть datetime.time"
-        assert self.duration in self.VALID_DURATIONS, f"duration должно быть одним из {self.VALID_DURATIONS}"
+        if not isinstance(self.id, UUID):
+            raise ValueError("Reminder.id должен быть UUID")
+        if not isinstance(self.user_id, UUID):
+            raise ValueError("Reminder.user_id должен быть UUID")
+        if not self.text.strip():
+            raise ValueError("Reminder.text не может быть пустым")
+        if self.frequency == Frequency.custom and not self.days.has_active_days():
+            raise ValueError("Для frequency='custom' должен быть хотя бы один активный день (1) в days")
+        if not isinstance(self.time, time):
+            raise ValueError("Reminder.time должен быть datetime.time")
+        if not isinstance(self.start_date, datetime) or not isinstance(self.end_date, datetime):
+            raise ValueError("start_date и end_date должны быть datetime")
+        if self.start_date > self.end_date:
+            raise ValueError("start_date не может быть позже end_date")
 
 
 @dataclass
@@ -60,7 +74,7 @@ class Notification:
     reminder_id: UUID
     scheduled_for: datetime
     sent: bool = False
-    motivation_id: Optional[UUID] = None
+    motivation_id: UUID | None = None
 
     def __post_init__(self):
         assert isinstance(self.id, UUID), "Notification.id должен быть UUID"

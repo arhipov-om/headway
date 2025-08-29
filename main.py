@@ -1,6 +1,7 @@
-from headway.presentation.cli import main as cli
-from headway.presentation.tg import run as tg
+from headway.presentation.cli.cli import run as cli
+from headway.presentation.telegram.app import run as tg
 
 
 if __name__ == '__main__':
-    tg()
+    # tg()
+    cli()
