@@ -13,12 +13,13 @@ class UserDTO:
     timezone: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ReminderDTO:
     id: UUID
     user_id: UUID
     text: str
     frequency: Frequency
+    start_day: int = None
     time: time
     start_date: datetime
     end_date: datetime
@@ -26,11 +27,12 @@ class ReminderDTO:
     active: bool
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateReminderDTO:
     user_id: UUID
     text: str
     frequency: Frequency
+    start_day: int = None
     duration: Duration
     time: time
     days: WeekDays = WeekDays.default()

@@ -45,6 +45,7 @@ class Reminder:
     user_id: UUID
     text: str
     frequency: Frequency
+    start_day: int = None
     days: WeekDays = WeekDays.default()
     time: time
     start_date: datetime
