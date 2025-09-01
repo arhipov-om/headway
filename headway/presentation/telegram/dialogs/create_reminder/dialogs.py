@@ -101,5 +101,10 @@ dialog = Dialog(
         Back(BACK),
         state=CreateReminder.Duration,
         getter=getters.get_duration
+    ),
+    Window(
+        Const("Добавлено!"),
+        Button(text=Const('Главное меню'), on_click=back_to_main_menu, id='__back__'),
+        state=CreateReminder.End
     )
 )

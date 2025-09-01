@@ -81,6 +81,4 @@ async def store_duration(callback: CallbackQuery, __, dialog_manager: DialogMana
             days=dialog_manager.dialog_data.get('week_days'),
         )
     )
-
-    # TODO: тут отправить в сервис
-    # await dialog_manager.next()  # End
+    await dialog_manager.next()  # End
