@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from uuid import UUID
 
-from ..domain.entitites import User, Notification, Motivation, Reminder
+from ..domain.entitites import User, Notification, Motivation, Reminder, Identity
 
 
 class IUserRepository(ABC):
@@ -16,6 +16,20 @@ class IUserRepository(ABC):
 
     @abstractmethod
     async def list(self) -> List[User]:
+        pass
+
+    @abstractmethod
+    async def get_by_provider(self, provider: str, provider_id: str) -> User | None:
+        pass
+
+
+class IIdentityRepository(ABC):
+    @abstractmethod
+    async def get(self, identity_id: UUID) -> User:
+        pass
+
+    @abstractmethod
+    async def create(self, identity: Identity):
         pass
 
 

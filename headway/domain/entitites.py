@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
 from uuid import UUID
@@ -11,11 +13,25 @@ class User:
     id: UUID
     name: str
     timezone: str = "UTC"
+    identities: list[Identity] = field(default_factory=list)
 
     def __post_init__(self):
         assert isinstance(self.id, UUID), "User.id должен быть UUID"
         if self.name is not None:
             assert self.name.strip(), "User.name не может быть пустым"
+
+    def add_identity(self, identity: Identity):
+        if identity not in self.identities:
+            self.identities.append(identity)
+
+
+
+@dataclass
+class Identity:
+    id: UUID
+    user_id: UUID
+    provider_id: str
+    provider: str
 
 
 @dataclass
