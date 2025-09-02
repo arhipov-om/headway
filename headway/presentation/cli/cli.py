@@ -28,15 +28,19 @@ class CLI:
             "q": ("Выход", sys.exit),
         }
 
+    @property
+    def user_id(self):
+        return self._user_id
+
     async def create_user(self):
         name = input("Введите имя пользователя: ")
-        user_dto: UserDTO = await self.user_service.create_user(name)
+        user_dto: UserDTO = await self.user_service.create_user(name=name, provider='cli', provider_id="1")
         self._user_id = user_dto.id
         print(f"Пользователь создан: {user_dto.id} - {user_dto.name}")
 
     async def create_reminder(self):
-        user_id_input = input("ID пользователя: ")
-        user_id = UUID(user_id_input)
+        # user_id_input = input("ID пользователя: ")
+        # user_id = UUID(user_id_input)
         text = input("Текст напоминания: ")
         frequency = input("Частота (daily/every_2_days/weekly/custom): ")
         t_input = input("Время (ЧЧ:ММ): ")
@@ -46,21 +50,22 @@ class CLI:
 
         reminder_dto: ReminderDTO = await self.reminder_service.create_reminder(
             CreateReminderDTO(
-                user_id=user_id,
+                user_id=self.user_id,
                 text=text,
-                frequency=Frequency(frequency),
+                frequency=frequency,
                 time=t,
-                duration=Duration(duration),
+                duration=duration,
+                days=None,
             )
         )
         print(f"Напоминание создано: {reminder_dto.id} - {reminder_dto.text}")
 
     async def list_reminders(self):
-        user_id_input = input("ID пользователя для просмотра напоминаний: ")
-        user_id = UUID(user_id_input)
-        reminders: list[ReminderDTO] = await self.reminder_service.list_reminders_by_user(user_id)
+        # user_id_input = input("ID пользователя для просмотра напоминаний: ")
+        # user_id = UUID(user_id_input)
+        reminders: list[ReminderDTO] = await self.reminder_service.list_reminders_by_user(self.user_id)
         for r in reminders:
-            print(f"{r.id} | {r.text} | {r.frequency.value} | {r.time} | Активно: {r.active}")
+            print(f"{r.id} | {r.text} | {r.frequency} | {r.time} | Активно: {r.active}")
 
     async def run(self):
         while True:
