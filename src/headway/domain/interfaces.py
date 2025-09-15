@@ -11,7 +11,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get(self, user_id: UUID) -> User:
+    async def get(self, user_id: UUID) -> User | None:
         pass
 
     @abstractmethod

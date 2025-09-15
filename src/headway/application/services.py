@@ -22,6 +22,11 @@ class UserService:
         user = User(id=user_id, name=name)
         user.add_identity(identity)
         user = await self.user_repo.create(user)
+        try:
+            await self.user_repo.session.commit()
+        except Exception as e:
+            pass
+
         return convert(user, UserDTO)
 
 
@@ -52,6 +57,7 @@ class ReminderService:
             days=WeekDays(create_reminder.days) if create_reminder.days else WeekDays.default()
         )
         reminder = await self.reminder_repo.create(reminder)
+        await self.reminder_repo.session.commit()
         return convert(reminder, ReminderDTO, recipe=self._convert_recipe)
 
     async def list_reminders_by_user(self, user_id: UUID) -> list[ReminderDTO]:

@@ -8,30 +8,21 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, ErrorEvent, ReplyKeyboardRemove
 from aiogram_dialog import setup_dialogs, DialogManager, StartMode, ShowMode
 from aiogram_dialog.api.exceptions import UnknownIntent
+from dishka import make_async_container
+from dishka.integrations.aiogram import setup_dishka, CONTAINER_NAME
 from environs import Env
 
-from headway.application.services import UserService, ReminderService
-from headway.infrastructure.database.inmemory import (UserRepository, InMemoryDB, ReminderRepository)
+from headway.application.services import UserService
+from headway.infrastructure.di import get_providers
 from headway.presentation.telegram import states
 from headway.presentation.telegram.dialogs import start_menu, create_reminder, manage_reminder
 from .handlers import router
 
 
-class InjectMiddleware(BaseMiddleware):
-    def __init__(self, data: dict) -> None:
-        self.data = data
-
-    async def __call__(self, handler, event, data):
-        for k, v in self.data.items():
-            data[k] = v
-        return await handler(event, data)
-
 class InjectUserMiddleware(BaseMiddleware):
-    def __init__(self) -> None:
-        pass
     async def __call__(self, handler, event, data):
         if event.event_type == "message" or event.event_type == "callback_query":
-            user_service: UserService = data['user_service']
+            user_service = await data[CONTAINER_NAME].get(UserService)
             from_user = data.get("event_from_user")
             user = await user_service.get_user_by_identity(provider='telegram', provider_id=str(from_user.id))
             if not user:
@@ -43,6 +34,7 @@ class InjectUserMiddleware(BaseMiddleware):
 
             data['user'] = user
         return await handler(event, data)
+
 
 async def on_unknown_intent(event: ErrorEvent, dialog_manager: DialogManager):
     # Example of handling UnknownIntent Error and starting new dialog.
@@ -75,15 +67,6 @@ async def main():
     env.read_env()
 
     bot_token = env.str("BOT_TOKEN")
-
-    db = InMemoryDB()
-
-    user_repo = UserRepository(db)
-    reminder_repo = ReminderRepository(db)
-
-    user_service = UserService(user_repo=user_repo)
-
-    reminder_service = ReminderService(reminder_repo=reminder_repo)
     bot = Bot(bot_token)
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_routers(
@@ -93,21 +76,17 @@ async def main():
         manage_reminder
     )
 
-    dp.update.middleware.register(InjectMiddleware({
-        "user_service": user_service,
-        "reminder_service": reminder_service,
-    }))
     dp.update.middleware.register(InjectUserMiddleware())
     dp.errors.register(
         on_unknown_intent,
         ExceptionTypeFilter(UnknownIntent),
     )
 
+    container = make_async_container(*get_providers(), context={Env: env})
+    setup_dishka(router=dp, container=container, auto_inject=True)
     setup_dialogs(dp)
-    await bot.set_my_commands(commands=[
-        BotCommand(command="/start", description='Главное меню'),
-        BotCommand(command="/menu", description='Главное меню')
-    ])
+
+    await bot.set_my_commands(commands=[BotCommand(command="/start", description='Главное меню')])
     await dp.start_polling(bot)
 
 

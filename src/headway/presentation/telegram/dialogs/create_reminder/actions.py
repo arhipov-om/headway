@@ -4,6 +4,8 @@ from datetime import time
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog import ShowMode
+from dishka import FromDishka
+from dishka.integrations.aiogram_dialog import inject
 
 from headway.application.dto import CreateReminderDTO, UserDTO
 from headway.application.services import ReminderService
@@ -63,10 +65,17 @@ async def store_week_days(_, __, dialog_manager: DialogManager, week_days, **___
     await dialog_manager.switch_to(CreateReminder.Time)
 
 
-async def store_duration(callback: CallbackQuery, __, dialog_manager: DialogManager, duration: time, **___):
+@inject
+async def store_duration(
+        callback: CallbackQuery,
+        __,
+        dialog_manager: DialogManager,
+        duration: time,
+        reminder_service: FromDishka[ReminderService],
+        **___
+):
     dialog_manager.dialog_data['duration'] = duration
 
-    reminder_service: ReminderService = dialog_manager.middleware_data.get('reminder_service')
     user: UserDTO = dialog_manager.middleware_data.get('user')
     await reminder_service.create_reminder(
         create_reminder=CreateReminderDTO

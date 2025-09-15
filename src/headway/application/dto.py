@@ -8,8 +8,14 @@ class UserDTO:
     id: UUID
     name: str
     timezone: str
-    identities: list
+    identities: list["IdentityDTO"]
 
+@dataclass
+class IdentityDTO:
+    id: UUID
+    user_id: UUID
+    provider_id: str
+    provider: str
 
 @dataclass(kw_only=True)
 class ReminderDTO:

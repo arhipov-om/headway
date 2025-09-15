@@ -9,6 +9,7 @@ from aiogram.types import (
     InlineKeyboardButton,
 )
 from aiogram_dialog import DialogManager, StartMode, ShowMode
+from dishka import FromDishka
 
 from headway.application.dto import ReminderDTO, CreateReminderDTO, UserDTO
 from headway.application.services import (
@@ -32,18 +33,6 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
 
 @router.message(Command("start"))
 async def start(message: Message, dialog_manager: DialogManager):
-    provider = 'telegram'
-    provider_id = message.from_user.id
-
-    user_service: UserService = dialog_manager.middleware_data.get('user_service')
-    user = await user_service.get_user_by_identity(provider=provider, provider_id=message.from_user.id)
-    if not user:
-        user = await user_service.create_user(
-            name=message.from_user.full_name,
-            provider=provider,
-            provider_id=str(provider_id)
-        )
-
     await dialog_manager.start(MainMenu.START, mode=StartMode.RESET_STACK, show_mode=ShowMode.EDIT)
     await message.delete()
 
