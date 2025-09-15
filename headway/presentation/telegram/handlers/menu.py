@@ -14,8 +14,8 @@ from headway.application.dto import ReminderDTO, CreateReminderDTO, UserDTO
 from headway.application.services import (
     ReminderService, UserService,
 )
-from headway.application.value_objects import Duration
 from headway.domain.entitites import Frequency
+from headway.domain.value_objects import Duration
 from ..callbacks import MenuCallback
 from ..dialogs.start_menu import MainMenu
 

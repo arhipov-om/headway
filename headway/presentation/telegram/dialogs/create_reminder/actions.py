@@ -1,6 +1,5 @@
 import re
 from datetime import time
-from uuid import uuid4
 
 from aiogram.types import Message, CallbackQuery
 from aiogram_dialog import DialogManager

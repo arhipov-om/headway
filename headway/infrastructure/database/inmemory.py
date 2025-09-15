@@ -1,8 +1,8 @@
 from random import choice
 from uuid import UUID
 
-from ..domain.entitites import User, Reminder, Motivation, Notification, Identity
-from ..domain.interfaces import IUserRepository, IMotivationRepository, IReminderRepository, IIdentityRepository
+from headway.domain.entitites import User, Reminder, Motivation, Notification, Identity
+from headway.domain.interfaces import IUserRepository, IMotivationRepository, IReminderRepository, IIdentityRepository
 
 
 class InMemoryDB:

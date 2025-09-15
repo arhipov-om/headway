@@ -5,7 +5,7 @@ from datetime import datetime, time
 from enum import Enum
 from uuid import UUID
 
-from headway.application.value_objects import WeekDays
+from headway.domain.value_objects import WeekDays
 
 
 @dataclass

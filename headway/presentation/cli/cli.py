@@ -9,9 +9,7 @@ from headway.application.dto import (
     CreateReminderDTO,
 )
 from headway.application.services import UserService, ReminderService
-from headway.application.value_objects import Duration
-from headway.domain.entitites import Frequency
-from headway.infrastructure.inmemory import InMemoryDB, UserRepository, ReminderRepository
+from headway.infrastructure.database.inmemory import InMemoryDB, UserRepository, ReminderRepository
 
 
 class CLI:

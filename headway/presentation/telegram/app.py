@@ -5,13 +5,13 @@ from aiogram import Bot, Dispatcher, BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import BotCommand, ErrorEvent, ReplyKeyboardRemove, Update
+from aiogram.types import BotCommand, ErrorEvent, ReplyKeyboardRemove
 from aiogram_dialog import setup_dialogs, DialogManager, StartMode, ShowMode
 from aiogram_dialog.api.exceptions import UnknownIntent
 from environs import Env
 
 from headway.application.services import UserService, ReminderService
-from headway.infrastructure.inmemory import (UserRepository, InMemoryDB, ReminderRepository)
+from headway.infrastructure.database.inmemory import (UserRepository, InMemoryDB, ReminderRepository)
 from headway.presentation.telegram import states
 from headway.presentation.telegram.dialogs import start_menu, create_reminder, manage_reminder
 from .handlers import router

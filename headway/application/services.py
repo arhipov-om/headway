@@ -4,9 +4,9 @@ from uuid import uuid4, UUID
 from adaptix.conversion import convert, coercer
 
 from .dto import ReminderDTO, UserDTO, CreateReminderDTO
-from .value_objects import Duration, WeekDays
 from ..domain.entitites import Reminder, User, Frequency, Identity
 from ..domain.interfaces import IUserRepository, IReminderRepository
+from ..domain.value_objects import Duration, WeekDays
 
 
 class UserService:
