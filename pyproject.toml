@@ -9,6 +9,7 @@ dependencies = [
     "aiogram-dialog>=2.4.0",
     "environs>=14.3.0",
     "python-dateutil>=2.9.0.post0",
+    "sqlalchemy>=2.0.43",
 ]
 
 
