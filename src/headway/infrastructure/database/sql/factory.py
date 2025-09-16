@@ -8,8 +8,8 @@ from headway.infrastructure.database.sql.config import SQLConfig
 def create_engine(config: SQLConfig) -> AsyncEngine:
     engine = create_async_engine(
         url=config.url_with_driver,
-        echo=config.ECHO,
-        pool_size=config.POOL_SIZE,
+        echo=config.DB_ECHO,
+        pool_size=config.DB_POOL_SIZE,
     )
     return engine
 

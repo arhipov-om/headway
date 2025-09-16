@@ -5,36 +5,36 @@ from environs import Env
 
 @dataclass
 class SQLConfig:
-    TYPE: str
-    HOST: str
-    PORT: int
-    USER: str
-    PASS: str
-    NAME: str
-    DRIVER: str
-    ECHO: bool
-    POOL_SIZE: int = field(default=8)
+    DB_TYPE: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_USER: str
+    DB_PASS: str
+    DB_NAME: str
+    DB_DRIVER: str
+    DB_ECHO: bool
+    DB_POOL_SIZE: int = field(default=8)
 
     @property
     def url(self) -> str:
-        if self.NAME:
-            return f"{self.TYPE}://{self.USER}:{self.PASS}@{self.HOST}:{self.PORT}/{self.NAME}"
-        return f"{self.TYPE}://{self.USER}:{self.PASS}@{self.HOST}:{self.PORT}"
+        if self.DB_NAME:
+            return f"{self.DB_TYPE}://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"{self.DB_TYPE}://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}"
 
     @property
     def url_with_driver(self) -> str:
-        return f"{self.TYPE}+{self.DRIVER}://{self.USER}:{self.PASS}@{self.HOST}:{self.PORT}/{self.NAME}"
+        return f"{self.DB_TYPE}+{self.DB_DRIVER}://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 def get_sql_config(env: Env) -> SQLConfig:
     return SQLConfig(
-        TYPE=env.str("TYPE"),
-        HOST=env.str("HOST"),
-        PORT=env.int("PORT"),
-        USER=env.str("USER"),
-        PASS=env.str("PASS"),
-        NAME=env.str("NAME"),
-        DRIVER=env.str("DRIVER"),
-        ECHO=env.bool("ECHO"),
-        POOL_SIZE=env.int("POOL_SIZE"),
+        DB_TYPE=env.str("DB_TYPE"),
+        DB_HOST=env.str("DB_HOST"),
+        DB_PORT=env.int("DB_PORT"),
+        DB_USER=env.str("DB_USER"),
+        DB_PASS=env.str("DB_PASS"),
+        DB_NAME=env.str("DB_NAME"),
+        DB_DRIVER=env.str("DB_DRIVER"),
+        DB_ECHO=env.bool("DB_ECHO"),
+        DB_POOL_SIZE=env.int("DB_POOL_SIZE"),
     )
