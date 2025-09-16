@@ -1,0 +1,46 @@
+services:
+  tg:
+    restart: always
+    container_name: headway
+    image: headway
+    build:
+      context: .
+    env_file:
+      - ".env"
+    command: [ "uv", "run", "-m", "headway.presentation.telegram" ]
+    depends_on:
+      - migrations
+  postgres:
+    image: postgres:17.4-bookworm
+    restart: always
+    environment:
+      PGPORT: ${DB_PORT}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - headway_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${DB_NAME} -U ${DB_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  migrations:
+    image: headway
+    container_name: "headway-migrations"
+    restart: on-failure
+    env_file:
+      - ".env"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: [ "uv", "run", "alembic", "upgrade", "head" ]
+#  cli:
+#    build:
+#      context: .
+#    command: [ "uv", "run", "-m", "headway.presentation.cli" ]
+volumes:
+  headway_postgres_data:
