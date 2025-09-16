@@ -16,6 +16,18 @@ class UserService:
     async def get_user_by_identity(self, provider_id: str, provider: str = 'telegram'):
         return await self.user_repo.get_by_provider(provider=provider, provider_id=provider_id)
 
+    async def get_user_by_id(self, user_id: str) -> UserDTO | None:
+        user = await self.user_repo.get(user_id=UUID(user_id))
+        return convert(user, UserDTO)
+
+    async def get_user_telegram_id(self, user_id: UUID) -> int | None:
+        user = await self.user_repo.get(user_id=user_id)
+        if not user:
+            return None
+        return int(user.telegram_id)
+
+
+
     async def create_user(self, name: str, provider: str, provider_id: str) -> UserDTO:
         user_id = uuid4()
         identity = Identity(id=uuid4(), user_id=user_id, provider=provider, provider_id=provider_id)
@@ -62,4 +74,8 @@ class ReminderService:
 
     async def list_reminders_by_user(self, user_id: UUID) -> list[ReminderDTO]:
         reminders = await self.reminder_repo.list_by_user(user_id)
+        return [convert(r, ReminderDTO, recipe=self._convert_recipe) for r in reminders]
+
+    async def get_all_reminders(self):
+        reminders = await self.reminder_repo.list_all()
         return [convert(r, ReminderDTO, recipe=self._convert_recipe) for r in reminders]

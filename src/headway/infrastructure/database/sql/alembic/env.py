@@ -1,12 +1,11 @@
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
 from environs import Env
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 from headway.infrastructure.database.sql.config import get_sql_config
 from headway.infrastructure.database.sql.models import Base

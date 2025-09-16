@@ -39,7 +39,9 @@ class SQLUserRepository(IUserRepository):
         return user
 
     async def get(self, user_id: UUID) -> User | None:
-        result = await self.session.execute(select(UserORM).where(UserORM.id == user_id))
+        result = await self.session.execute(select(UserORM).
+                                            options(selectinload(UserORM.identities))
+                                            .where(UserORM.id == user_id))
         orm_user = result.scalar_one_or_none()
         if not orm_user:
             return None
@@ -99,7 +101,9 @@ class SQLReminderRepository(IReminderRepository):
         pass
 
     async def list_all(self) -> list[Reminder]:
-        pass
+        result = await self.session.execute(select(ReminderORM))
+        data = result.scalars().all()
+        return [reminder_retort.convert(r, Reminder) for r in data]
 #
 #
 # class MotivationRepository(IMotivationRepository):

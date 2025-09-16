@@ -6,6 +6,7 @@ from dishka.integrations.aiogram_dialog import inject
 from headway.application.dto import UserDTO, ReminderDTO
 from headway.application.services import ReminderService, UserService
 
+
 @inject
 async def reminders_list(
         dialog_manager: DialogManager,

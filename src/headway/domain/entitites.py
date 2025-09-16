@@ -24,6 +24,12 @@ class User:
         if identity not in self.identities:
             self.identities.append(identity)
 
+    @property
+    def telegram_id(self) -> str | None:
+        for identity in self.identities:
+            if identity.provider == 'telegram':
+                return identity.provider_id
+        return None
 
 
 @dataclass

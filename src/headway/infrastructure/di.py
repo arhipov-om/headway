@@ -1,13 +1,14 @@
-from dishka import Provider, Scope, provide
-from environs import Env
+from dishka import Provider, Scope, provide, AsyncContainer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from headway.application.intefaces import IScheduler
 from headway.application.services import UserService, ReminderService
 from headway.domain.interfaces import IUserRepository, IReminderRepository
 from headway.infrastructure.config import get_config, Config
 from headway.infrastructure.database.sql.config import SQLConfig
 from headway.infrastructure.database.sql.di import SQLProvider
 from headway.infrastructure.database.sql.repositories import SQLUserRepository, SQLReminderRepository
+from headway.infrastructure.scheduler import AsyncScheduler
 
 
 class InfrastructureProvider(Provider):
@@ -32,6 +33,10 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def get_reminder_service(self, reminder_repo: IReminderRepository) -> ReminderService:
         return ReminderService(reminder_repo=reminder_repo)
+
+    @provide(scope=Scope.APP)
+    async def get_scheduler(self, container: AsyncContainer) -> IScheduler:
+        return AsyncScheduler(container=container)
 
 def get_providers():
     return [

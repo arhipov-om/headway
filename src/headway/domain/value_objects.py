@@ -38,6 +38,14 @@ class WeekDays:
         """Возвращает значение по умолчанию: '0000000'."""
         return cls(value="0000000")
 
+    @property
+    def cron(self) -> str:
+        day_map = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
+        active_days = [day_map[i] for i, bit in enumerate(self.value) if bit == '1']
+        day_of_week = ','.join(active_days) if active_days else '*'
+        return day_of_week
+
+
 
 @dataclass(frozen=True)
 class Duration:

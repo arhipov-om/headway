@@ -9,12 +9,10 @@ from aiogram.types import (
     InlineKeyboardButton,
 )
 from aiogram_dialog import DialogManager, StartMode, ShowMode
-from dishka import FromDishka
 
 from headway.application.dto import ReminderDTO, CreateReminderDTO, UserDTO
 from headway.application.services import (
-    ReminderService, UserService,
-)
+    ReminderService, )
 from headway.domain.entitites import Frequency
 from headway.domain.value_objects import Duration
 from ..callbacks import MenuCallback

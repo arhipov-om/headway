@@ -8,7 +8,9 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from headway.application.dto import CreateReminderDTO, UserDTO
+from headway.application.intefaces import IScheduler
 from headway.application.services import ReminderService
+from headway.infrastructure.send_reminder import add_reminders_to_schedule
 from headway.presentation.telegram.states import CreateReminder
 
 
@@ -72,12 +74,14 @@ async def store_duration(
         dialog_manager: DialogManager,
         duration: time,
         reminder_service: FromDishka[ReminderService],
+        scheduler: FromDishka[IScheduler],
+
         **___
 ):
     dialog_manager.dialog_data['duration'] = duration
 
     user: UserDTO = dialog_manager.middleware_data.get('user')
-    await reminder_service.create_reminder(
+    r = await reminder_service.create_reminder(
         create_reminder=CreateReminderDTO
             (
             user_id=user.id,
@@ -89,4 +93,8 @@ async def store_duration(
             days=dialog_manager.dialog_data.get('week_days'),
         )
     )
+    await add_reminders_to_schedule(
+        reminders=[r],
+        scheduler=scheduler,
+        bot=callback.bot)
     await dialog_manager.next()  # End

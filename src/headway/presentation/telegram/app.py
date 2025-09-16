@@ -12,8 +12,10 @@ from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka, CONTAINER_NAME
 from environs import Env
 
-from headway.application.services import UserService
+from headway.application.intefaces import IScheduler
+from headway.application.services import UserService, ReminderService
 from headway.infrastructure.di import get_providers
+from headway.infrastructure.send_reminder import add_reminders_to_schedule
 from headway.presentation.telegram import states
 from headway.presentation.telegram.dialogs import start_menu, create_reminder, manage_reminder
 from .handlers import router
@@ -62,6 +64,16 @@ async def on_unknown_intent(event: ErrorEvent, dialog_manager: DialogManager):
     )
 
 
+async def init_start(container, bot):
+    scheduler = await container.get(IScheduler)
+    await scheduler.start()
+
+    async with container() as scope:
+        r_service = await scope.get(ReminderService)
+        all_reminders = await r_service.get_all_reminders()
+        await add_reminders_to_schedule(scheduler=scheduler, reminders=all_reminders, bot=bot)
+
+
 async def main():
     env = Env()
     env.read_env()
@@ -83,6 +95,7 @@ async def main():
     )
 
     container = make_async_container(*get_providers(), context={Env: env})
+    await init_start(container, bot)
     setup_dishka(router=dp, container=container, auto_inject=True)
     setup_dialogs(dp)
 

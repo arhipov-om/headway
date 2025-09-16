@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from environs import Env
-
 from headway.infrastructure.database.sql.config import SQLConfig
 
 
