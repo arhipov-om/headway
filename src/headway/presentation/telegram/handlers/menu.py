@@ -3,11 +3,7 @@ from datetime import time
 
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import (
-    Message,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-)
+from aiogram.types import Message
 from aiogram_dialog import DialogManager, StartMode, ShowMode
 
 from headway.application.dto import ReminderDTO, CreateReminderDTO, UserDTO
@@ -15,18 +11,9 @@ from headway.application.services import (
     ReminderService, )
 from headway.domain.entitites import Frequency
 from headway.domain.value_objects import Duration
-from ..callbacks import MenuCallback
 from ..dialogs.start_menu import MainMenu
 
 router = Router()
-
-
-def get_menu_keyboard() -> InlineKeyboardMarkup:
-    buttons = [
-        InlineKeyboardButton(text="Создать напоминание", callback_data=MenuCallback(action="create_reminder").pack()),
-        InlineKeyboardButton(text="Список напоминаний", callback_data=MenuCallback(action="list_reminders").pack()),
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=[[button] for button in buttons])
 
 
 @router.message(Command("start"))
