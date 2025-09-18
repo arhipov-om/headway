@@ -3,13 +3,16 @@ import sys
 from datetime import time
 from uuid import UUID
 
+from dishka import make_async_container
+from environs import Env
+
 from headway.application.dto import (
     UserDTO,
     ReminderDTO,
     CreateReminderDTO,
 )
 from headway.application.services import UserService, ReminderService
-from headway.infrastructure.database.inmemory import InMemoryDB, UserRepository, ReminderRepository
+from headway.infrastructure.di import get_providers
 
 
 class CLI:
@@ -31,8 +34,10 @@ class CLI:
         return self._user_id
 
     async def create_user(self):
-        name = input("Введите имя пользователя: ")
-        user_dto: UserDTO = await self.user_service.create_user(name=name, provider='cli', provider_id="1")
+        user_dto = await self.user_service.get_user_by_identity(provider="cli", provider_id="1")
+        if not user_dto:
+            name = input("Введите имя пользователя: ")
+            user_dto: UserDTO = await self.user_service.create_user(name=name, provider='cli', provider_id="1")
         self._user_id = user_dto.id
         print(f"Пользователь создан: {user_dto.id} - {user_dto.name}")
 
@@ -53,7 +58,7 @@ class CLI:
                 frequency=frequency,
                 time=t,
                 duration=duration,
-                days=None,
+                days="",
             )
         )
         print(f"Напоминание создано: {reminder_dto.id} - {reminder_dto.text}")
@@ -81,16 +86,16 @@ class CLI:
 
 
 async def main():
-    db = InMemoryDB()
+    env = Env()
+    env.read_env()
+    container = make_async_container(*get_providers(), context={Env: env})
+    async with container() as scope:
+        user_service = await scope.get(UserService)
+        reminder_service = await scope.get(ReminderService)
 
-    user_repo = UserRepository(db)
-    reminder_repo = ReminderRepository(db)
+        cli = CLI(user_service, reminder_service)
+        await cli.run()
 
-    user_service = UserService(user_repo=user_repo)
-    reminder_service = ReminderService(reminder_repo=reminder_repo)
-
-    cli = CLI(user_service, reminder_service)
-    await cli.run()
 
 def run():
     asyncio.run(main())
