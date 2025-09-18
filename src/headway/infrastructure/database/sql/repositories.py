@@ -3,7 +3,7 @@ from uuid import UUID
 from adaptix._internal.conversion.facade.provider import coercer
 from adaptix.conversion import ConversionRetort
 from adaptix.conversion import allow_unlinked_optional
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,11 +14,13 @@ from headway.infrastructure.database.sql.models import UserORM, IdentityORM, Rem
 
 retort = ConversionRetort(recipe=[allow_unlinked_optional()])
 
+
 def int_or_none(x):
     try:
         return int(x)
     except TypeError:
         return None
+
 
 reminder_retort = retort.extend(recipe=[
     allow_unlinked_optional(),
@@ -49,11 +51,16 @@ class SQLUserRepository(IUserRepository):
 
     async def get_by_provider(self, provider: str, provider_id: str) -> User | None:
         result = await self.session.execute(
-            select(UserORM).
-            options(selectinload(UserORM.identities)).
-            where(IdentityORM.provider_id == provider_id).
-            where(IdentityORM.provider == provider)
+            select(UserORM)
+            .join(IdentityORM, UserORM.id == IdentityORM.user_id)
+            .options(selectinload(UserORM.identities))
+            .where(
+                and_(
+                    IdentityORM.provider_id == provider_id,
+                    IdentityORM.provider == provider)
+            )
         )
+
         orm_user = result.scalar_one_or_none()
         if not orm_user:
             return None
