@@ -7,8 +7,8 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from headway.domain.entitites import User, Reminder, Frequency
-from headway.domain.interfaces import IUserRepository, IReminderRepository
+from headway.domain.entitites import User, Reminder, Frequency, Motivation
+from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
 from headway.domain.value_objects import WeekDays
 from headway.infrastructure.database.sql.models import UserORM, IdentityORM, ReminderORM
 
@@ -111,12 +111,20 @@ class SQLReminderRepository(IReminderRepository):
         result = await self.session.execute(select(ReminderORM))
         data = result.scalars().all()
         return [reminder_retort.convert(r, Reminder) for r in data]
-#
-#
-# class MotivationRepository(IMotivationRepository):
-#
-#     async def list_all(self) -> list[Motivation]:
-#
-#     async def get_random(self) -> Motivation:
-#
-#     async def add(self, motivation: Motivation) -> Motivation:
+
+
+class SQLMotivationRepository(IMotivationRepository):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create(self, motivation: Motivation) -> Motivation:
+        pass
+
+    async def list_all(self) -> list[Motivation]:
+        pass
+
+    async def get_random(self) -> Motivation:
+        pass
+
+    async def add(self, motivation: Motivation) -> Motivation:
+        pass

@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
-from uuid import UUID
+from typing import Literal
+from uuid import UUID, uuid4
 
 from headway.domain.value_objects import WeekDays
 
@@ -52,6 +53,14 @@ class Motivation:
         assert isinstance(self.id, UUID), "Motivation.id должен быть UUID"
         assert self.text.strip(), "Motivation.text не может быть пустым"
         assert self.category in self.VALID_CATEGORIES, "Неверная категория"
+
+    @classmethod
+    def create(cls, text: str, category: Literal["affirmation", "quote"]) -> Motivation:
+        return cls(
+            id=uuid4(),
+            text=text,
+            category=category
+        )
 
 
 class Frequency(Enum):

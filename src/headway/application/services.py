@@ -3,9 +3,10 @@ from uuid import uuid4, UUID
 
 from adaptix.conversion import convert, coercer
 
-from .dto import ReminderDTO, UserDTO, CreateReminderDTO
+from .dto import ReminderDTO, UserDTO, CreateReminderDTO, MotivationDTO
+from .intefaces import IMotivationProvider
 from ..domain.entitites import Reminder, User, Frequency, Identity
-from ..domain.interfaces import IUserRepository, IReminderRepository
+from ..domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
 from ..domain.value_objects import Duration, WeekDays
 
 
@@ -26,8 +27,7 @@ class UserService:
             return None
         return int(user.telegram_id)
 
-
-
+    # TODO: вынести создание User в фабричный метод.
     async def create_user(self, name: str, provider: str, provider_id: str) -> UserDTO:
         user_id = uuid4()
         identity = Identity(id=uuid4(), user_id=user_id, provider=provider, provider_id=provider_id)
@@ -54,6 +54,7 @@ class ReminderService:
             coercer(WeekDays, str, lambda x: x.value),
         ]
 
+    # TODO: вынести создание Reminder в фабричный метод.
     async def create_reminder(self, create_reminder: CreateReminderDTO) -> ReminderDTO:
         start_date = datetime.now()
         end_date = Duration(create_reminder.duration).to_delta(start_date=start_date)
@@ -79,3 +80,19 @@ class ReminderService:
     async def get_all_reminders(self):
         reminders = await self.reminder_repo.list_all()
         return [convert(r, ReminderDTO, recipe=self._convert_recipe) for r in reminders]
+
+
+class MotivationService:
+    def __init__(
+            self,
+            motivation_provider: IMotivationProvider,
+            motivation_repo: IMotivationRepository
+    ):
+        self.motivation_provider = motivation_provider
+        self.motivation_repo = motivation_repo
+
+    async def get_random_motivation(self, task_text: str | None = None) -> MotivationDTO:
+        motivation = await self.motivation_provider.get_random_motivation(task_text=task_text)
+        # await self.motivation_repo.create(motivation=motivation)
+        # await self.motivation_repo.session.commit()
+        return convert(motivation, MotivationDTO)

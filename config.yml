@@ -1,0 +1,13 @@
+ai:
+  model: "google/gemma-3n-e2b-it:free"
+  base_url: "https://openrouter.ai/api/v1/chat/completions"
+  language: "Russian"
+  prompt_messages: [
+    {
+      "role": "system",
+      "content": "You create affirmations based on the task from the Task Tracker. 
+      You always answer in {{ language }} language. 
+      Answer only 1 sentence affirmations without text format. 
+      The task: {{ task }}"
+    }
+  ]

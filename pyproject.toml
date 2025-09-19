@@ -13,6 +13,7 @@ dependencies = [
     "dishka>=1.7.1",
     "environs>=14.3.0",
     "python-dateutil>=2.9.0.post0",
+    "pyyaml>=6.0.2",
     "sqlalchemy>=2.0.43",
 ]
 

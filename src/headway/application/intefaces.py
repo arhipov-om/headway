@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Any
 
+from headway.domain.entitites import Motivation
+
 
 class IScheduler(ABC):
     @abstractmethod
@@ -13,4 +15,11 @@ class IScheduler(ABC):
 
     @abstractmethod
     def add_job(self, func: Callable, trigger: Any, *args, **kwargs):
+        ...
+
+
+# TODO: возможно это должно быть в слое Domain.
+class IMotivationProvider(ABC):
+    @abstractmethod
+    async def get_random_motivation(self, task_text: str | None = None) -> Motivation:
         ...

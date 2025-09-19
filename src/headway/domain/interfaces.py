@@ -60,12 +60,17 @@ class IReminderRepository(ABC):
 
 
 class IMotivationRepository(ABC):
+
     @abstractmethod
     async def list_all(self) -> list[Motivation]:
         pass
 
     @abstractmethod
     async def get_random(self) -> Motivation:
+        pass
+
+    @abstractmethod
+    async def create(self, motivation: Motivation) -> Motivation:
         pass
 
 

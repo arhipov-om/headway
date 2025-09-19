@@ -1,13 +1,16 @@
 from dishka import Provider, Scope, provide, AsyncContainer
+from environs import Env
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from headway.application.intefaces import IScheduler
-from headway.application.services import UserService, ReminderService
-from headway.domain.interfaces import IUserRepository, IReminderRepository
-from headway.infrastructure.config import get_config, Config
+from headway.application.intefaces import IScheduler, IMotivationProvider
+from headway.application.services import UserService, ReminderService, MotivationService
+from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
+from headway.infrastructure.config import get_config, Config, AIConfig, get_ai_config
 from headway.infrastructure.database.sql.config import SQLConfig
 from headway.infrastructure.database.sql.di import SQLProvider
-from headway.infrastructure.database.sql.repositories import SQLUserRepository, SQLReminderRepository
+from headway.infrastructure.database.sql.repositories import SQLUserRepository, SQLReminderRepository, \
+    SQLMotivationRepository
+from headway.infrastructure.motivation import MotivationProvider
 from headway.infrastructure.scheduler import AsyncScheduler
 
 
@@ -15,8 +18,12 @@ class InfrastructureProvider(Provider):
     scope = Scope.APP
 
     @provide
-    def get_config(self, db: SQLConfig) -> Config:
-        return get_config(db=db)
+    def get_ai_config(self, env: Env) -> AIConfig:
+        return get_ai_config(env=env)
+
+    @provide
+    def get_config(self, db: SQLConfig, ai: AIConfig) -> Config:
+        return get_config(db=db, ai=ai)
 
     @provide(scope=Scope.REQUEST)
     async def get_user_repository(self, session: AsyncSession) -> IUserRepository:
@@ -27,6 +34,10 @@ class InfrastructureProvider(Provider):
         return SQLReminderRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
+    async def get_motivation_repository(self, session: AsyncSession) -> IMotivationRepository:
+        return SQLMotivationRepository(session=session)
+
+    @provide(scope=Scope.REQUEST)
     async def get_user_service(self, user_repository: IUserRepository) -> UserService:
         return UserService(user_repo=user_repository)
 
@@ -34,9 +45,22 @@ class InfrastructureProvider(Provider):
     async def get_reminder_service(self, reminder_repo: IReminderRepository) -> ReminderService:
         return ReminderService(reminder_repo=reminder_repo)
 
+    @provide(scope=Scope.REQUEST)
+    async def get_motivation_service(
+            self,
+            motivation_repo: IMotivationRepository,
+            motivation_provider: IMotivationProvider,
+    ) -> MotivationService:
+        return MotivationService(motivation_repo=motivation_repo, motivation_provider=motivation_provider)
+
     @provide(scope=Scope.APP)
     async def get_scheduler(self, container: AsyncContainer) -> IScheduler:
         return AsyncScheduler(container=container)
+
+    @provide(scope=Scope.REQUEST)
+    async def get_motivation_provider(self, ai_config: AIConfig) -> IMotivationProvider:
+        return MotivationProvider(config=ai_config)
+
 
 def get_providers():
     return [
