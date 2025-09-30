@@ -10,7 +10,7 @@ from dishka.integrations.aiogram_dialog import inject
 from headway.application.dto import CreateReminderDTO, UserDTO
 from headway.application.intefaces import IScheduler
 from headway.application.services import ReminderService
-from headway.infrastructure.send_reminder import add_reminders_to_schedule
+from headway.infrastructure.gateways.send_reminder import add_reminders_to_schedule
 from headway.presentation.telegram.states import CreateReminder
 
 

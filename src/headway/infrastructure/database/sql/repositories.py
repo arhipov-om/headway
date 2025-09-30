@@ -3,14 +3,15 @@ from uuid import UUID
 from adaptix._internal.conversion.facade.provider import coercer
 from adaptix.conversion import ConversionRetort
 from adaptix.conversion import allow_unlinked_optional
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from headway.domain.entitites import User, Reminder, Frequency, Motivation
-from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
+from headway.domain.entitites import User, Reminder, Frequency, Motivation, Notification
+from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository, \
+    INotificationRepository
 from headway.domain.value_objects import WeekDays
-from headway.infrastructure.database.sql.models import UserORM, IdentityORM, ReminderORM
+from headway.infrastructure.database.sql.models import UserORM, IdentityORM, ReminderORM, NotificationORM
 
 retort = ConversionRetort(recipe=[allow_unlinked_optional()])
 
@@ -127,4 +128,25 @@ class SQLMotivationRepository(IMotivationRepository):
         pass
 
     async def add(self, motivation: Motivation) -> Motivation:
+        pass
+
+
+class SQLNotificationRepository(INotificationRepository):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create(self, notification: Notification) -> Notification:
+        self.session.add(reminder_retort.convert(notification, NotificationORM))
+        return notification
+
+    async def list_pending(self) -> list[Notification]:
+        pass
+
+    async def mark_sent(self, notification_id: UUID) -> None:
+        await self.session.execute(
+            Update(NotificationORM).values(sent=True)
+            .where(NotificationORM.id == notification_id)
+        )
+
+    async def list_all(self) -> list[Notification]:
         pass

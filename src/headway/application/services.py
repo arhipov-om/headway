@@ -1,12 +1,13 @@
+import logging
 from datetime import datetime
 from uuid import uuid4, UUID
 
 from adaptix.conversion import convert, coercer
 
-from .dto import ReminderDTO, UserDTO, CreateReminderDTO, MotivationDTO
+from .dto import ReminderDTO, UserDTO, CreateReminderDTO, MotivationDTO, NotificationDTO
 from .intefaces import IMotivationProvider
-from ..domain.entitites import Reminder, User, Frequency, Identity
-from ..domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
+from ..domain.entitites import Reminder, User, Frequency, Identity, Notification
+from ..domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository, INotificationRepository
 from ..domain.value_objects import Duration, WeekDays
 
 
@@ -82,11 +83,12 @@ class ReminderService:
         return [convert(r, ReminderDTO, recipe=self._convert_recipe) for r in reminders]
 
 
+# TODO: Поменять название сервиса, так как отвечает не только за motivation.
 class MotivationService:
     def __init__(
             self,
             motivation_provider: IMotivationProvider,
-            motivation_repo: IMotivationRepository
+            motivation_repo: IMotivationRepository,
     ):
         self.motivation_provider = motivation_provider
         self.motivation_repo = motivation_repo
@@ -96,3 +98,56 @@ class MotivationService:
         # await self.motivation_repo.create(motivation=motivation)
         # await self.motivation_repo.session.commit()
         return convert(motivation, MotivationDTO)
+
+
+class NotificationService:
+    def __init__(
+            self,
+            notification_repo: INotificationRepository,
+            reminder_service: ReminderService,
+            motivation_service: MotivationService,
+            user_service: UserService,
+    ):
+        self.notification_repo = notification_repo
+        self.reminder_service = reminder_service
+        self.motivation_service = motivation_service
+        self.user_service = user_service
+
+    async def create_notification(
+            self,
+            reminder_dto: ReminderDTO,
+            motivation_id: UUID | None = None
+    ) -> NotificationDTO:
+        notification = Notification.create(
+            reminder_id=reminder_dto.id,
+            scheduled_for=reminder_dto.time,
+            motivation_id=motivation_id
+        )
+        await self.notification_repo.create(notification)
+        await self.notification_repo.session.commit()
+        return convert(notification, NotificationDTO)
+
+    async def mark_notification_sent(self, notification_id: UUID) -> bool:
+        await self.notification_repo.mark_sent(notification_id=notification_id)
+        await self.notification_repo.session.commit()
+        return True
+
+    async def send(self, reminder_dto: ReminderDTO, message_client) -> None:
+        user_telegram_id = await self.user_service.get_user_telegram_id(reminder_dto.user_id)
+        if user_telegram_id:
+            text = reminder_dto.text
+            try:
+                motivation = await self.motivation_service.get_random_motivation(task_text=text)
+                text += f"\n\n"
+                text += f"<i>{motivation.text}</i>"
+            except Exception as e:
+                motivation = None
+                logging.warning("не смог получить мотивацию %s", e.__traceback__)
+
+            notification = await self.create_notification(
+                reminder_dto=reminder_dto,
+                motivation_id=motivation.id if motivation else None
+            )
+            await message_client.send_message(chat_id=user_telegram_id, text=text)
+            await self.mark_notification_sent(notification_id=notification.id)
+            await self.notification_repo.session.commit()

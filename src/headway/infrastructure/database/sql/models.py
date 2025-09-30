@@ -100,11 +100,15 @@ class NotificationORM(Base):
 
     id: Mapped[UUID] = mapped_column(SQL_UUID(as_uuid=True), primary_key=True)
     reminder_id: Mapped[UUID] = mapped_column(ForeignKey("reminders.id", ondelete="CASCADE"))
-    scheduled_for: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    scheduled_for: Mapped[time] = mapped_column(Time, nullable=False)
     sent: Mapped[bool] = mapped_column(Boolean)
     motivation_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("motivations.id", ondelete="SET NULL"), nullable=True
     )
+
+    started_at: Mapped[datetime | None] = mapped_column(DateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)
+    status: Mapped[str]
 
     reminder: Mapped[ReminderORM] = relationship(back_populates="notifications")
     motivation: Mapped[MotivationORM | None] = relationship()

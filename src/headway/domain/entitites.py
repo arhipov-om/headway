@@ -99,18 +99,42 @@ class Reminder:
         if self.start_date > self.end_date:
             raise ValueError("start_date не может быть позже end_date")
 
+    def send(self) -> bool:
+        return self.active
 
-@dataclass
+
+@dataclass(kw_only=True)
 class Notification:
     id: UUID
     reminder_id: UUID
-    scheduled_for: datetime
-    sent: bool = False
+    scheduled_for: time
+    sent: bool
     motivation_id: UUID | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    status: str
+
+    VALID_STATUS = {'done','process', 'missing', 'failed'}
 
     def __post_init__(self):
         assert isinstance(self.id, UUID), "Notification.id должен быть UUID"
         assert isinstance(self.reminder_id, UUID), "Notification.reminder_id должен быть UUID"
-        assert isinstance(self.scheduled_for, datetime), "Notification.scheduled_for должен быть datetime"
+        assert isinstance(self.scheduled_for, time), "Notification.scheduled_for должен быть time"
         if self.motivation_id is not None:
             assert isinstance(self.motivation_id, UUID), "Notification.motivation_id должен быть UUID"
+
+    @classmethod
+    def create(
+            cls,
+            reminder_id: UUID,
+            scheduled_for: time,
+            motivation_id: UUID | None,
+    ):
+        return cls(
+            id=uuid4(),
+            reminder_id=reminder_id,
+            scheduled_for=scheduled_for,
+            sent=False,
+            motivation_id=motivation_id if motivation_id else None,
+            status='process'
+        )

@@ -6,8 +6,8 @@ from dishka import FromDishka
 
 from headway.application.dto import ReminderDTO
 from headway.application.intefaces import IScheduler
-from headway.application.services import UserService, MotivationService
-from headway.infrastructure.scheduler import inject, cron
+from headway.application.services import UserService, MotivationService, NotificationService
+from headway.infrastructure.gateways.scheduler import inject, cron
 
 logger = logging.getLogger(__name__)
 
@@ -15,19 +15,9 @@ logger = logging.getLogger(__name__)
 async def send_reminder(
         bot: Bot,
         reminder: ReminderDTO,
-        user_service: FromDishka[UserService],
-        motivation_service: FromDishka[MotivationService],
+        notification_service: FromDishka[NotificationService],
 ):
-    user_telegram_id = await user_service.get_user_telegram_id(reminder.user_id)
-    if user_telegram_id:
-        text = reminder.text
-        try:
-            motivation = await motivation_service.get_random_motivation(task_text=text)
-            text += f"\n\n"
-            text += f"<i>{motivation.text}</i>"
-        except Exception as e:
-            logger.warning("не смог получить мотивацию %s", e)
-        await bot.send_message(chat_id=user_telegram_id, text=text)
+    await notification_service.send(reminder_dto=reminder, message_client=bot)
 
 
 async def add_reminders_to_schedule(

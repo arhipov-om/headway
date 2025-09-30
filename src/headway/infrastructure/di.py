@@ -3,15 +3,16 @@ from environs import Env
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from headway.application.intefaces import IScheduler, IMotivationProvider
-from headway.application.services import UserService, ReminderService, MotivationService
-from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository
+from headway.application.services import UserService, ReminderService, MotivationService, NotificationService
+from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository, \
+    INotificationRepository
 from headway.infrastructure.config import get_config, Config, AIConfig, get_ai_config
 from headway.infrastructure.database.sql.config import SQLConfig
 from headway.infrastructure.database.sql.di import SQLProvider
 from headway.infrastructure.database.sql.repositories import SQLUserRepository, SQLReminderRepository, \
-    SQLMotivationRepository
-from headway.infrastructure.motivation import MotivationProvider
-from headway.infrastructure.scheduler import AsyncScheduler
+    SQLMotivationRepository, SQLNotificationRepository
+from headway.infrastructure.gateways.motivation import MotivationProvider
+from headway.infrastructure.gateways.scheduler import AsyncScheduler
 
 
 class InfrastructureProvider(Provider):
@@ -38,6 +39,10 @@ class InfrastructureProvider(Provider):
         return SQLMotivationRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
+    async def get_notification_repository(self, session: AsyncSession) -> INotificationRepository:
+        return SQLNotificationRepository(session=session)
+
+    @provide(scope=Scope.REQUEST)
     async def get_user_service(self, user_repository: IUserRepository) -> UserService:
         return UserService(user_repo=user_repository)
 
@@ -51,7 +56,25 @@ class InfrastructureProvider(Provider):
             motivation_repo: IMotivationRepository,
             motivation_provider: IMotivationProvider,
     ) -> MotivationService:
-        return MotivationService(motivation_repo=motivation_repo, motivation_provider=motivation_provider)
+        return MotivationService(
+            motivation_repo=motivation_repo,
+            motivation_provider=motivation_provider,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    async def get_notification_service(
+            self,
+            notification_repo: INotificationRepository,
+            reminder_service: ReminderService,
+            motivation_service: MotivationService,
+            user_service: UserService,
+    ) -> NotificationService:
+        return NotificationService(
+            notification_repo=notification_repo,
+            reminder_service=reminder_service,
+            motivation_service=motivation_service,
+            user_service=user_service,
+        )
 
     @provide(scope=Scope.APP)
     async def get_scheduler(self, container: AsyncContainer) -> IScheduler:

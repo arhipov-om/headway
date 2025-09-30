@@ -17,7 +17,7 @@ from environs import Env
 from headway.application.intefaces import IScheduler
 from headway.application.services import UserService, ReminderService
 from headway.infrastructure.di import get_providers
-from headway.infrastructure.send_reminder import add_reminders_to_schedule
+from headway.infrastructure.gateways.send_reminder import add_reminders_to_schedule
 from headway.presentation.telegram import states
 from headway.presentation.telegram.dialogs import start_menu, create_reminder, manage_reminder
 from .handlers import router

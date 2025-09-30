@@ -5,7 +5,7 @@ async def get_data(dialog_manager: DialogManager, **_):
     frequency = [
         ('Каждый день', 'daily'),
         ('Через день', 'every_other_day'),
-        ('Каждые два дня', 'every_two_days'),
+        ('Каждые два дня', 'every_2_days'),
         ('Раз в неделю', 'weekly'),
         ('Указать вручную', 'custom'),
     ]

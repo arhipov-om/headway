@@ -53,6 +53,9 @@ class MotivationDTO:
 class NotificationDTO:
     id: UUID
     reminder_id: UUID
-    scheduled_for: datetime
+    scheduled_for: time
     sent: bool
-    motivation_text: str
+    motivation_id: UUID | None
+    started_at: datetime | None
+    finished_at: datetime | None
+    status: str
