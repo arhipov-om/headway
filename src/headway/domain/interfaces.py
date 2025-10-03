@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List
 from uuid import UUID
 
@@ -85,6 +86,12 @@ class INotificationRepository(ABC):
 
     @abstractmethod
     async def mark_sent(self, notification_id: UUID) -> None:
+        pass
+    @abstractmethod
+    async def mark_started(self, short_notification_id: str, time: datetime | None = None) -> None:
+        pass
+    @abstractmethod
+    async def mark_finished(self, short_notification_id: str, time: datetime | None = None) -> None:
         pass
 
     @abstractmethod

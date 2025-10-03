@@ -1,9 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
 from adaptix._internal.conversion.facade.provider import coercer
 from adaptix.conversion import ConversionRetort
 from adaptix.conversion import allow_unlinked_optional
-from sqlalchemy import select, and_, Update
+from sqlalchemy import select, and_, Update, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,7 +12,7 @@ from headway.domain.entitites import User, Reminder, Frequency, Motivation, Noti
 from headway.domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository, \
     INotificationRepository
 from headway.domain.value_objects import WeekDays
-from headway.infrastructure.database.sql.models import UserORM, IdentityORM, ReminderORM, NotificationORM
+from headway.infrastructure.database.sql.models import UserORM, IdentityORM, ReminderORM, NotificationORM, MotivationORM
 
 retort = ConversionRetort(recipe=[allow_unlinked_optional()])
 
@@ -119,7 +120,8 @@ class SQLMotivationRepository(IMotivationRepository):
         self.session = session
 
     async def create(self, motivation: Motivation) -> Motivation:
-        pass
+        self.session.add(retort.convert(motivation, MotivationORM))
+        return motivation
 
     async def list_all(self) -> list[Motivation]:
         pass
@@ -146,6 +148,20 @@ class SQLNotificationRepository(INotificationRepository):
         await self.session.execute(
             Update(NotificationORM).values(sent=True)
             .where(NotificationORM.id == notification_id)
+        )
+
+    async def mark_started(self, short_notification_id: str, time: datetime | None = None) -> None:
+        await self.session.execute(
+            Update(NotificationORM).values(started_at=time or datetime.now())
+            .where(cast(NotificationORM.id, String).startswith(short_notification_id))
+            # TODO: в таком случае не работают индексы
+        )
+
+    async def mark_finished(self, short_notification_id: str, time: datetime | None = None) -> None:
+        await self.session.execute(
+            Update(NotificationORM).values(finished_at=time or datetime.now())
+            .where(cast(NotificationORM.id, String).startswith(short_notification_id))
+            # TODO: в таком случае не работают индексы
         )
 
     async def list_all(self) -> list[Notification]:

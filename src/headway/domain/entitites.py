@@ -55,7 +55,7 @@ class Motivation:
         assert self.category in self.VALID_CATEGORIES, "Неверная категория"
 
     @classmethod
-    def create(cls, text: str, category: Literal["affirmation", "quote"]) -> Motivation:
+    def create(cls, text: str, category: Literal["affirmation", "quote"] = "affirmation") -> Motivation:
         return cls(
             id=uuid4(),
             text=text,

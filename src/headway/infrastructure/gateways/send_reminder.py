@@ -6,9 +6,9 @@ from dishka import FromDishka
 
 from headway.application.dto import ReminderDTO
 from headway.application.intefaces import IScheduler
-from headway.application.services import UserService, MotivationService, NotificationService
-from headway.infrastructure.gateways.scheduler import inject, cron
-
+from headway.application.services import NotificationService
+from headway.infrastructure.scheduler import inject, cron
+from headway.infrastructure.adapters.telegram import TelegramClientAdapter
 logger = logging.getLogger(__name__)
 
 @inject
@@ -17,7 +17,7 @@ async def send_reminder(
         reminder: ReminderDTO,
         notification_service: FromDishka[NotificationService],
 ):
-    await notification_service.send(reminder_dto=reminder, message_client=bot)
+    await notification_service.send(reminder_dto=reminder, message_client=TelegramClientAdapter(bot))
 
 
 async def add_reminders_to_schedule(

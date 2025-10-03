@@ -1,11 +1,12 @@
 import logging
+import traceback
 from datetime import datetime
 from uuid import uuid4, UUID
 
 from adaptix.conversion import convert, coercer
 
 from .dto import ReminderDTO, UserDTO, CreateReminderDTO, MotivationDTO, NotificationDTO
-from .intefaces import IMotivationProvider
+from .intefaces import IMotivationProvider, IMessagingClient
 from ..domain.entitites import Reminder, User, Frequency, Identity, Notification
 from ..domain.interfaces import IUserRepository, IReminderRepository, IMotivationRepository, INotificationRepository
 from ..domain.value_objects import Duration, WeekDays
@@ -95,8 +96,8 @@ class MotivationService:
 
     async def get_random_motivation(self, task_text: str | None = None) -> MotivationDTO:
         motivation = await self.motivation_provider.get_random_motivation(task_text=task_text)
-        # await self.motivation_repo.create(motivation=motivation)
-        # await self.motivation_repo.session.commit()
+        await self.motivation_repo.create(motivation=motivation)
+        await self.motivation_repo.session.commit()
         return convert(motivation, MotivationDTO)
 
 
@@ -127,27 +128,30 @@ class NotificationService:
         await self.notification_repo.session.commit()
         return convert(notification, NotificationDTO)
 
-    async def mark_notification_sent(self, notification_id: UUID) -> bool:
-        await self.notification_repo.mark_sent(notification_id=notification_id)
+    async def mark_started(self, short_notification_id: str, time: datetime | None = None) -> None:
+        await self.notification_repo.mark_started(short_notification_id=short_notification_id, time=time)
         await self.notification_repo.session.commit()
-        return True
 
-    async def send(self, reminder_dto: ReminderDTO, message_client) -> None:
+    async def mark_finished(self, short_notification_id: str, time: datetime | None = None) -> None:
+        await self.notification_repo.mark_finished(short_notification_id=short_notification_id, time=time)
+        await self.notification_repo.session.commit()
+
+    async def send(self, reminder_dto: ReminderDTO, message_client: IMessagingClient) -> None:
         user_telegram_id = await self.user_service.get_user_telegram_id(reminder_dto.user_id)
         if user_telegram_id:
             text = reminder_dto.text
             try:
                 motivation = await self.motivation_service.get_random_motivation(task_text=text)
-                text += f"\n\n"
-                text += f"<i>{motivation.text}</i>"
+                text += f"<i>\n\n{motivation.text}</i>"
             except Exception as e:
                 motivation = None
-                logging.warning("не смог получить мотивацию %s", e.__traceback__)
+                tb_str = traceback.format_exc()
+                logging.warning("не смог получить мотивацию %s", tb_str)
 
             notification = await self.create_notification(
                 reminder_dto=reminder_dto,
                 motivation_id=motivation.id if motivation else None
             )
-            await message_client.send_message(chat_id=user_telegram_id, text=text)
-            await self.mark_notification_sent(notification_id=notification.id)
+            await message_client.send_reminder(chat_id=str(user_telegram_id), notification_dto=notification, text=text)
+            await self.notification_repo.mark_sent(notification_id=notification.id)
             await self.notification_repo.session.commit()

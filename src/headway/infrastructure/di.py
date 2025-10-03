@@ -12,7 +12,7 @@ from headway.infrastructure.database.sql.di import SQLProvider
 from headway.infrastructure.database.sql.repositories import SQLUserRepository, SQLReminderRepository, \
     SQLMotivationRepository, SQLNotificationRepository
 from headway.infrastructure.gateways.motivation import MotivationProvider
-from headway.infrastructure.gateways.scheduler import AsyncScheduler
+from headway.infrastructure.scheduler import AsyncScheduler
 
 
 class InfrastructureProvider(Provider):
